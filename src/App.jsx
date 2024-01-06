@@ -1,4 +1,4 @@
-import { Component } from 'react';
+import { useState, useEffect, createContext, useRef } from "react"
 import { Notify } from 'notiflix/build/notiflix-notify-aio';
 
 import { Container } from "./components/Container/Container";
@@ -10,95 +10,76 @@ import { Error } from 'components/Error/Error';
 import { Modal } from 'components/Modal/Modal';
 import { getAllImages } from "./api/gallery";
 
-export class App extends Component {
-  state = {
-    page: 1,
-    per_page: 12,
-    key: "",
-    images: [],
-    isLoading: false,
-    error: "",
-    isEnd: false,
-    isModal: false,
-    largeImg:"",
+export const MyContext = createContext();
+
+export const App = () => {
+  const [page, setPage] = useState(1);
+  const [key, setKey] = useState("");
+  const [images, setImages] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [isEnd, setIsEnd] = useState(false);
+  const [isModal, setIsModal] = useState(false);
+  const [largeImg, setLargeImg] = useState('');
+
+  const perPage = useRef(12);
+
+  const handleOnSearch = (keyWord) => {
+    setKey(keyWord);
+    setPage(1);
+    setImages([]);
   }
 
-  handleOnSearch = (keyWord) => {
-    this.setState({
-      key: keyWord,
-      page: 1,
-      images: [],
-        })
+  const handleOnClick = () => {
+    setPage((prev)=> prev+1)
   }
 
-  handleOnClick = () => {
-    this.setState((prevState)=>{
-      return {
-        page: prevState.page+1,
-      }
-      })
+  const showModal = (url) => {
+    setIsModal(true);
+    setLargeImg(url);
   }
 
-  showModal = (url) => {
-    this.setState({
-        isModal: true,
-        largeImg:url,
-    })
+  const closeModal = () => {
+    setIsModal(false);
+    setLargeImg("");
   }
 
-  closeModal = () => {
-    this.setState({
-        isModal: false,
-    })
-  }
-
-
-  getData = async () => {
+  useEffect(() => {
+    if (!key) return;
+    const getData = async () => {
     try {
-      this.setState({isLoading: true, error: "",})
-      const response = await getAllImages(this.state)
-      this.setState((prevState) => {
-        return {
-          images: [...prevState.images, ...response.hits],
-          isEnd: true,
-      }
-      })
-      if (Number.parseInt(response.totalHits / this.state.per_page) <= this.state.page) {
-        this.setState({
-        isEnd: false,
-        })
+      setIsLoading(true);
+      setError("");
+      const response = await getAllImages({ key, page, perPage });
+      setImages((prev) => [...prev, ...response.hits]);
+      setIsEnd(true);
+      if (Number.parseInt(response.totalHits / perPage.current) <= page) {
+        setIsEnd(false);
       } 
       if (!response.totalHits) {
-        Notify.info(`no images for this "${this.state.key}"`);
+        Notify.info(`no images for this "${key}"`);
       }
     } catch (error) {
       console.log(error.message);
-      this.setState({
-        error:error.message,
-      })
+      setError(error.message);
     } finally {
-      this.setState({isLoading:false,})
+      setIsLoading(false);
     }
-  }
-
-  componentDidUpdate(prevProps, prevState) {
-    if (prevState.key !== this.state.key || prevState.page !== this.state.page) {
-      this.getData()
     }
-  }
+    getData()
+  },[key,page])
 
-  render() {
-    const { images, isLoading ,error, isEnd,key, isModal} = this.state;
-    return (
-      <Container Container>
-        <Searchbar handleOnSearch={this.handleOnSearch} />
+  return (
+    <MyContext.Provider value={{handleOnSearch,images,showModal,handleOnClick,closeModal,largeImg,}}>
+      <Container>
+        <Searchbar/>
         {isLoading && <Loader/>}
         {error&& <Error>{error}</Error>}
-        {images.length !== 0 && <ImageGallery images={images} showModal={this.showModal} />}
-        {images.length !== 0 && isEnd && <Button handleOnClick={this.handleOnClick} />}
+        {images.length !== 0 && <ImageGallery/>}
+        {images.length !== 0 && isEnd && <Button/>}
         {images.length !== 0 && !isEnd && <p>No more images for "{key}"</p>}
-        {isModal && <Modal closeModal={this.closeModal} largeImg={this.state.largeImg} />}
+        {isModal && <Modal closeModal={closeModal} largeImg={largeImg} />}
       </Container>
+    </MyContext.Provider>
   )
-  }
-};
+}

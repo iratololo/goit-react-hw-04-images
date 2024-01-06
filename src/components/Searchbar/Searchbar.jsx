@@ -1,17 +1,20 @@
-import { Component } from 'react';
+import { useContext} from 'react';
 
+import { MyContext } from 'App';
 import css from "./Searchbar.module.css"
 
-export class Searchbar extends Component {
-    handleOnSubmit = (e) => {
+
+export const Searchbar = () => {
+    const context = useContext(MyContext);
+
+    const handleOnSubmit = (e) => {
         e.preventDefault();
         const keyWord = e.currentTarget.elements.search.value;
-        this.props.handleOnSearch(keyWord)
+        context.handleOnSearch(keyWord)
     }
-    render() {
-        return (
+  return (
             <header className={css.searchbar}>
-                <form onSubmit={this.handleOnSubmit} className={css.form}>
+                <form onSubmit={handleOnSubmit} className={css.form}>
                     <button type="submit" className={css.button}>
                         <span>Search</span>
                     </button>
@@ -27,5 +30,4 @@ export class Searchbar extends Component {
                 </form>
             </header>
         )
-    }
 }

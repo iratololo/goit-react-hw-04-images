@@ -1,21 +1,19 @@
-import { Component } from 'react';
+import { useContext} from 'react';
 
+import { MyContext } from 'App';
 import css from "./ImageGalleryItem.module.css"
 
-export class ImageGalleryItem extends Component {
-    handlerOnClick = () => {
-        const { data: { largeImageURL }, showModal } = this.props;
-        showModal(largeImageURL)
+export const ImageGalleryItem = ({data: { largeImageURL, id,webformatURL, }}) => {
+    const context = useContext(MyContext);
+    const handlerOnClick = () => {
+        context.showModal(largeImageURL);
     }
-    render() {
-        const { data: { id, webformatURL } } = this.props;
-        return (
+  return (
         <li id={id} className={css.item}>
             <img className={css.img} src={webformatURL} alt="something" />
             <div className={css.plug}>
-                <button onClick={this.handlerOnClick} className={css.button} type="button">Zoom in</button>
+                <button onClick={handlerOnClick} className={css.button} type="button">Zoom in</button>
             </div>
         </li>
     )
-    }
 }

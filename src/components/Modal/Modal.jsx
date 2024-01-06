@@ -1,25 +1,26 @@
-import { Component } from 'react';
+import { useContext, useEffect} from 'react';
 
+import { MyContext } from 'App';
 import css from "./Modal.module.css"
 
-export class Modal extends Component {
-    handleEsc = (e) => {
-        if (e.code === "Escape") {
-        this.props.closeModal()
-       }
-    }
+export const Modal = () => {
+    const context = useContext(MyContext);
 
-    componentDidMount() {
-        document.addEventListener("keydown", this.handleEsc)
-    }
-    componentWillUnmount() {
-        document.removeEventListener("keydown", this.handleEsc)
-    }
-    render() {
-        return (
-            <div onClick={this.props.closeModal} className={css.modal}>
-            <img className={css.img} src={this.props.largeImg} alt="something" />
+    useEffect(() => {  
+        const handleEsc = (e) => {
+        if (e.code === "Escape") {
+        context.closeModal()
+        }
+        }
+        document.addEventListener("keydown", handleEsc)
+        return () => {
+            document.removeEventListener("keydown",handleEsc)
+        }
+  }, [context])
+
+    return (
+            <div onClick={context.closeModal} className={css.modal}>
+            <img className={css.img} src={context.largeImg} alt="something" />
         </div>
     )
-    }
 }
